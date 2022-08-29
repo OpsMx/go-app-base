@@ -33,16 +33,26 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.9.0"
 )
 
+// TracerProvider holds the state for a provider, and provides an
+// easy way to shut it down without exposing the specific type
+// of tracer returned.
+type TracerProvider struct {
+	Provider *tracesdk.TracerProvider
+}
+
 // NewTracerProvider returns an OpenTelemetry TracerProvider configured to use
 // the Jaeger exporter that will send spans to the provided url. The returned
 // TracerProvider will also use a Resource configured with all the information
 // about the application.
 //
+// If no error is returned, `defer provider.Shutdown(ctx)` should be set up
+// to ensure flushing occurs.
+//
 // If the Jaeger URL is empty, the OpenTelemetry
 // TracerProvider will be configured to not report to Jaeger.
 //
-// if traceToStdout is true, traces will be sent to stdout.
-func NewTracerProvider(jaegerURL string, traceToStdout bool, githash string, appname string, traceRatio float64) (*tracesdk.TracerProvider, error) {
+// If traceToStdout is true, traces will be sent to stdout.
+func NewTracerProvider(jaegerURL string, traceToStdout bool, githash string, appname string, traceRatio float64) (*TracerProvider, error) {
 	res, err := resource.New(context.Background(),
 		// add detectors here if needed
 		resource.WithTelemetrySDK(),
@@ -80,18 +90,18 @@ func NewTracerProvider(jaegerURL string, traceToStdout bool, githash string, app
 	otel.SetTracerProvider(tp)
 
 	otel.SetTextMapPropagator(propagation.TraceContext{})
-	return tp, nil
+	return &TracerProvider{Provider: tp}, nil
 }
 
-// TracerShutdown should be deferred immediately after newTracerProvider()
+// Shutdown should be deferred immediately after NewTracerProvider()
 // when no error is returned.  This will ensure that on app termination
 // it will flush any buffered traces, if possible.  A maximum time
 // of 5 seconds will be allowed before we give up, to prevent a hang
 // at shutdown.
-func TracerShutdown(ctx context.Context, provider *tracesdk.TracerProvider) {
+func (p *TracerProvider) Shutdown(ctx context.Context) {
 	ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 	defer cancel()
-	if err := provider.Shutdown(ctx); err != nil {
+	if err := p.Provider.Shutdown(ctx); err != nil {
 		log.Printf("shutting down tracing: %v", err)
 	}
 }
