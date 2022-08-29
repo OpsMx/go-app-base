@@ -19,6 +19,8 @@ package httputil
 import (
 	"encoding/json"
 	"net/http"
+
+	"log"
 )
 
 // StatusCodeOK returns true if the error code provided is between
@@ -49,7 +51,14 @@ func SetError(w http.ResponseWriter, statusCode int, message interface{}) {
 	m := HttpError{Status: "error", Code: statusCode, Error: message}
 	d, err := json.Marshal(m)
 	if err != nil {
+		log.Printf("marshalling error json: %v", err)
+	}
+	l, err := w.Write(d)
+	if l != len(d) {
+		log.Printf("writing error json: %d of %d bytes written", l, len(d))
 		return
 	}
-	w.Write(d)
+	if err != nil {
+		log.Printf("writing error json: %v", err)
+	}
 }
