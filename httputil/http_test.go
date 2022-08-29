@@ -17,6 +17,7 @@
 package httputil
 
 import (
+	"crypto/tls"
 	"fmt"
 	"testing"
 
@@ -122,5 +123,14 @@ func Test_SetClientConfig(t *testing.T) {
 		c := ClientConfig{DialTimeout: 9876}
 		SetClientConfig(c)
 		require.Equal(t, 9876, defaultClientConfig.DialTimeout)
+	})
+}
+
+func Test_SetTLSConfig(t *testing.T) {
+	t.Run("sets", func(t *testing.T) {
+		defaultTLSConfig = nil
+		c := tls.Config{}
+		SetTLSConfig(&c)
+		require.NotNil(t, defaultTLSConfig)
 	})
 }
