@@ -37,14 +37,18 @@ var (
 	gitHash   = "dev"
 )
 
-func findGitBranch() string {
+// FindGitBranch will return the envar, compiled-in var, or "dev" if none set.
+func FindGitBranch() string {
 	return util.GetEnvar("GIT_BRANCH", gitBranch)
 }
 
-func findGitHash() string {
+// FindGitHash will return the envar, compiled-in var, or "dev" if none set.
+func FindGitHash() string {
 	return util.GetEnvar("GIT_HASH", gitHash)
 }
 
-func ShowGitInfo() {
-	log.Printf("GIT Version: %s@%s", findGitBranch(), findGitHash())
+// ShowGitVersion will log a string using log.Printf() of the found
+// git branch and hash.
+func ShowGitVersion() {
+	log.Printf("GIT Version: %s@%s", FindGitBranch(), FindGitHash())
 }
