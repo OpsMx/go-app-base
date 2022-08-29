@@ -23,8 +23,7 @@ import (
 	"runtime"
 )
 
-// TODO: I know, "util" is considered bad Go...
-
+// Traceback returns a string showing the call path, used for debugging.
 func Traceback() string {
 	pc := make([]uintptr, 15)
 	n := runtime.Callers(2, pc)
@@ -33,12 +32,15 @@ func Traceback() string {
 	return fmt.Sprintf("%s:%d %s\n", frame.File, frame.Line, frame.Function)
 }
 
+// Check will log an error using log.Fatal() if err is not nil, otherwise
+// nothing happens.
 func Check(err error) {
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
+// GetEnvar will return the envar if set, otherwise the default string provided.
 func GetEnvar(name string, defaultValue string) string {
 	value, found := os.LookupEnv(name)
 	if !found {
