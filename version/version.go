@@ -17,38 +17,32 @@
 package version
 
 import (
-	"log"
-
-	"github.com/OpsMx/go-app-base/util"
+	"fmt"
 )
 
-// Versions can be set via environment variables at run-time, or
-// can be linker-patched directly during the "go build" step.
-// Envars will override the variables defined here or patched.
-//
-// The expectation is that the docker container used in production will
-// have these set.  However, if we want to support containers and
-// native code, we may want to patch instead.
-//
-// Patching would also be required if more than one app runs in the same
-// container.
+// Versions can be set linker.
 var (
 	gitBranch = "dev"
 	gitHash   = "dev"
+	buildType = "unknown"
 )
 
-// FindGitBranch will return the envar, compiled-in var, or "dev" if none set.
-func FindGitBranch() string {
-	return util.GetEnvar("GIT_BRANCH", gitBranch)
+// GitBranch will return the envar, compiled-in var, or "dev" if none set.
+func GitBranch() string {
+	return gitBranch
 }
 
-// FindGitHash will return the envar, compiled-in var, or "dev" if none set.
-func FindGitHash() string {
-	return util.GetEnvar("GIT_HASH", gitHash)
+// GitHash will return the envar, compiled-in var, or "dev" if none set.
+func GitHash() string {
+	return gitHash
 }
 
-// ShowGitVersion will log a string using log.Printf() of the found
-// git branch and hash.
-func ShowGitVersion() {
-	log.Printf("GIT Version: %s@%s", FindGitBranch(), FindGitHash())
+// BuildType retuns whatever buildTime is set to by the linker.
+func BuildType() string {
+	return buildType
+}
+
+// VersionString returns a formatted version, git hash, and build type.
+func VersionString() string {
+	return fmt.Sprintf("version: %s, hash: %s, buildType: %s", gitBranch, gitHash, buildType)
 }
