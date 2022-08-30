@@ -1,7 +1,5 @@
 name: Push to go package system on tag
 
-
-
 on:
   push:
     tags:
