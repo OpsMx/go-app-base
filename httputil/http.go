@@ -35,7 +35,6 @@ type ClientConfig struct {
 	MaxIdleConnections    int `json:"maxIdleConnections,omitempty" yaml:"maxIdleConnections,omitempty"`
 }
 
-// Set this to define default TLS parameters, such as roots.
 var defaultTLSConfig *tls.Config
 
 var defaultClientConfig = &ClientConfig{
@@ -64,6 +63,10 @@ func (c *ClientConfig) applyDefaults() {
 	}
 }
 
+// SetClientConfig will replace the current clientConfig for all future clients
+// returned by NewHTTPClient().  Generally, this will be set once, and probably
+// not changed per connection.  It is not going to be thread-safe, in that
+// setting the config and then calling NewHTTPClient() could be a race.
 func SetClientConfig(c ClientConfig) {
 	if defaultClientConfig == nil {
 		defaultClientConfig = &ClientConfig{}
@@ -72,10 +75,27 @@ func SetClientConfig(c ClientConfig) {
 	defaultClientConfig.applyDefaults()
 }
 
+// SetTLSConfig sets the default TLS configuration used by NewHTTPClient().
+// This will generally be set once for adding custom CA roots or other
+// configuration used throughout the application.
+//
+// NewHTTPClient() also allows per-client TLS configuration, if desired.
 func SetTLSConfig(tlsconfig *tls.Config) {
 	defaultTLSConfig = tlsconfig
 }
 
+// NewHTTPClient returns a new http.Client that is configured with
+// sane timeouts, a global TLS configuration, and optionally a per-client
+// TLS config.
+//
+// Generally, the global config will have things like custom CA roots,
+// and we will want to trust those for every outgoing conneciton.
+// A per-client TLS config would be used where we are talking to a
+// specific API, and want to insert our certificates or a custom
+// CA root for just that connection.
+//
+// Future changes should allow merging tls configs, so we can add to
+// the base default rather than replace it entirely.
 func NewHTTPClient(tlsConfig *tls.Config) *http.Client {
 	if tlsConfig == nil {
 		tlsConfig = defaultTLSConfig

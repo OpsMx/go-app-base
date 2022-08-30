@@ -21,6 +21,14 @@ import (
 	"log"
 )
 
+// CheckedWrite will check to ensure the number of bytes intended to be written
+// were written, and log a warning if not.  It will also check the error
+// returned and log the error if there was one.
+//
+// It may be better to try to write the data that wasn't successfully
+// written.
+//
+// This is used to log any errors mostly, rather than try to recover.
 func CheckedWrite(w io.Writer, d []byte) {
 	l, err := w.Write(d)
 	if l != len(d) {
