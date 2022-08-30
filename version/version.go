@@ -21,13 +21,23 @@ import (
 )
 
 // Versions can be set linker.
+//
+// For example, to set `gitBranch`, an ldflags of `-X 'github.com/OpsMx/go-app-base/version.gitBranch=v1.4.2'`
+// could be used on the 'go build' command line.
+//
+// These are generally set in the Makefile or Dockerfile from information obtained from the git repo.
 var (
 	gitBranch = "dev"
 	gitHash   = "dev"
 	buildType = "unknown"
 )
 
-// GitBranch will return the envar, compiled-in var, or "dev" if none set.
+// GitBranch will return the envar, compiled-in var, or "dev" if none set.  Often this is
+// a tag, so will have a format such as `v1.0.2` or `v1.0.2-5-g12350123` for changes without
+// a specific tag.
+//
+// This can be used for "short" version strings, while VersionString would be more
+// exact.
 func GitBranch() string {
 	return gitBranch
 }
