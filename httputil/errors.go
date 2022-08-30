@@ -29,9 +29,9 @@ func StatusCodeOK(statusCode int) bool {
 	return statusCode >= 200 && statusCode <= 299
 }
 
-// HTTPError defines a simple struct to return JSON formatted error
+// httpError defines a simple struct to return JSON formatted error
 // messages.
-type HTTPError struct {
+type httpError struct {
 	Status string      `json:"status,omitempty" yaml:"status,omitempty"`
 	Code   int         `json:"code,omitempty" yaml:"code,omitempty"`
 	Error  interface{} `json:"error,omitempty" yaml:"error,omitempty"`
@@ -48,7 +48,7 @@ type HTTPError struct {
 func SetError(w http.ResponseWriter, statusCode int, message interface{}) {
 	w.Header().Set("content-type", "application/json")
 	w.WriteHeader(statusCode)
-	m := HTTPError{Status: "error", Code: statusCode, Error: message}
+	m := httpError{Status: "error", Code: statusCode, Error: message}
 	d, err := json.Marshal(m)
 	if err != nil {
 		log.Printf("marshalling error json: %v", err)
