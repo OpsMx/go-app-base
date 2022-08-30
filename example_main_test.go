@@ -46,7 +46,10 @@ var (
 
 func exiter() {
 	time.Sleep(1 * time.Second)
-	syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+	err := syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+	if err != nil {
+		log.Fatalf("KILL failed: %v", err)
+	}
 }
 
 func Example() {
