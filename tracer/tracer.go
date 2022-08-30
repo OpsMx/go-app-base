@@ -69,16 +69,27 @@ func NewTracerProvider(jaegerURL string, traceToStdout bool, githash string, app
 		tracesdk.WithSampler(tracesdk.ParentBased(tracesdk.TraceIDRatioBased(traceRatio))),
 	}
 
+	exporterCount := 0
 	if jaegerURL != "" {
 		exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(jaegerURL)))
 		if err != nil {
 			return nil, err
 		}
 		opts = append(opts, tracesdk.WithBatcher(exp))
+		exporterCount++
 	}
 
 	if traceToStdout {
 		exp, err := newConsoleExporter(os.Stdout)
+		if err != nil {
+			return nil, err
+		}
+		opts = append(opts, tracesdk.WithBatcher(exp))
+		exporterCount++
+	}
+
+	if exporterCount == 0 {
+		exp, err := newNullExporter()
 		if err != nil {
 			return nil, err
 		}
@@ -111,4 +122,19 @@ func newConsoleExporter(w io.Writer) (trace.SpanExporter, error) {
 		stdouttrace.WithWriter(w),
 		stdouttrace.WithPrettyPrint(),
 	)
+}
+
+// dummy null exporter
+func newNullExporter() (trace.SpanExporter, error) {
+	return nullExporter{}, nil
+}
+
+type nullExporter struct{}
+
+func (nullExporter) ExportSpans(_ context.Context, _ []trace.ReadOnlySpan) error {
+	return nil
+}
+
+func (nullExporter) Shutdown(_ context.Context) error {
+	return nil
 }
