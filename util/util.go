@@ -37,3 +37,15 @@ func GetEnvar(name string, defaultValue string) string {
 	}
 	return value
 }
+
+// Contains looks inside a slice to see if a specific element exists.
+// This is not fast, and intended only when the length of the slice
+// is small as a linear search is used.
+func Contains[T comparable](elems []T, v T) bool {
+	for _, s := range elems {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
