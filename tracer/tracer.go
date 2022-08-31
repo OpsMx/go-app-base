@@ -124,6 +124,8 @@ func newConsoleExporter(w io.Writer) (trace.SpanExporter, error) {
 	)
 }
 
+var _ trace.SpanExporter = &nullExporter{}
+
 // dummy null exporter
 func newNullExporter() (trace.SpanExporter, error) {
 	return nullExporter{}, nil
