@@ -118,7 +118,11 @@ func (m *ControllerManager) reloadFromController() {
 	// we do not need to refresh tokens and the URL cannot change when talking to the
 	// controller.  If these change, we will want a restart.
 	for key, fetchedService := range services {
-		if _, found := m.services[key]; found {
+		if svc, found := m.services[key]; found {
+			if annotationsDifferent(svc, fetchedService) {
+				m.services[key] = fetchedService
+				m.sendUpdate(fetchedService)
+			}
 			continue
 		}
 		url, token, err := m.getTokenAndURL(fetchedService)
@@ -141,6 +145,18 @@ func (m *ControllerManager) reloadFromController() {
 		m.sendDelete(service)
 		delete(m.services, key)
 	}
+}
+
+func annotationsDifferent(a controllerService, b controllerService) bool {
+	if len(a) != len(b) {
+		return true
+	}
+	for k, v := range a.Annotations {
+		if v != b.Annotations[k] {
+			return true
+		}
+	}
+	return false
 }
 
 func (m *ControllerManager) sendUpdate(s controllerService) {
