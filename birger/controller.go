@@ -120,6 +120,8 @@ func (m *ControllerManager) reloadFromController() {
 	for key, fetchedService := range services {
 		if svc, found := m.services[key]; found {
 			if annotationsDifferent(svc, fetchedService) {
+				fetchedService.URL = svc.URL
+				fetchedService.Token = svc.Token
 				m.services[key] = fetchedService
 				m.sendUpdate(fetchedService)
 			}
