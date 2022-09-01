@@ -49,11 +49,12 @@ type ControllerManager struct {
 }
 
 type controllerService struct {
-	URL       string
-	Name      string
-	Type      string
-	AgentName string
-	Token     string
+	URL         string
+	Name        string
+	Type        string
+	Annotations map[string]string
+	AgentName   string
+	Token       string
 }
 
 // MakeControllerManager returns a new ControllerManager which will periodically poll
@@ -144,12 +145,13 @@ func (m *ControllerManager) reloadFromController() {
 
 func (m *ControllerManager) sendUpdate(s controllerService) {
 	m.UpdateChan <- ServiceUpdate{
-		Operation: "update",
-		Name:      s.Name,
-		Type:      s.Type,
-		AgentName: s.AgentName,
-		URL:       s.URL,
-		Token:     s.Token,
+		Operation:   "update",
+		Name:        s.Name,
+		Type:        s.Type,
+		AgentName:   s.AgentName,
+		Annotations: s.Annotations,
+		URL:         s.URL,
+		Token:       s.Token,
 	}
 }
 
@@ -173,14 +175,16 @@ type connectedAgentsResponse struct {
 }
 
 type connectedAgent struct {
-	Name      string          `json:"name,omitempty"`
-	Endpoints []agentEndpoint `json:"endpoints,omitempty"`
+	Name         string            `json:"name,omitempty"`
+	Annnotations map[string]string `json:"annotations,omitempty"`
+	Endpoints    []agentEndpoint   `json:"endpoints,omitempty"`
 }
 
 type agentEndpoint struct {
-	Name       string `json:"name,omitempty"`
-	Type       string `json:"type,omitempty"`
-	Configured bool   `json:"configured,omitempty"`
+	Name         string            `json:"name,omitempty"`
+	Type         string            `json:"type,omitempty"`
+	Annnotations map[string]string `json:"annotations,omitempty"`
+	Configured   bool              `json:"configured,omitempty"`
 }
 
 type controllerServiceCredentialsRequest struct {
@@ -264,8 +268,12 @@ func (m *ControllerManager) getArgoServices() (map[string]controllerService, err
 		return map[string]controllerService{}, fmt.Errorf("reading body: %v", err)
 	}
 
+	return m.parseAgentStatistics(data)
+}
+
+func (m *ControllerManager) parseAgentStatistics(data []byte) (map[string]controllerService, error) {
 	var ca connectedAgentsResponse
-	err = json.Unmarshal(data, &ca)
+	err := json.Unmarshal(data, &ca)
 	if err != nil {
 		return map[string]controllerService{}, fmt.Errorf("cannot decode connected agent JSON: %v", err)
 	}
@@ -278,7 +286,7 @@ func (m *ControllerManager) getArgoServices() (map[string]controllerService, err
 				continue
 			}
 			key := a.Name + ":" + ep.Name + ":" + ep.Type
-			endpoints[key] = controllerService{AgentName: a.Name, Name: ep.Name, Type: ep.Type}
+			endpoints[key] = controllerService{AgentName: a.Name, Name: ep.Name, Type: ep.Type, Annotations: ep.Annnotations}
 		}
 	}
 

@@ -23,10 +23,11 @@ package birger
 // Name, Type, and AgentName will be set.  For update only, the
 // URL and Token will also be included.
 type ServiceUpdate struct {
-	Operation string // delete, update (implies add)
-	Name      string
-	Type      string
-	AgentName string
-	Token     string // Only set for update
-	URL       string // Only set for update
+	Operation   string // delete, update (implies add)
+	Name        string
+	Type        string
+	AgentName   string
+	Annotations map[string]string // Only set for update
+	Token       string            // Only set for update
+	URL         string            // Only set for update
 }
