@@ -196,6 +196,7 @@ type connectedAgent struct {
 	Name         string            `json:"name,omitempty"`
 	Annnotations map[string]string `json:"annotations,omitempty"`
 	Endpoints    []agentEndpoint   `json:"endpoints,omitempty"`
+	ConnectedAt  int64             `json:"connectedAt,omitEmpty"`
 }
 
 type agentEndpoint struct {
@@ -289,6 +290,11 @@ func (m *ControllerManager) getArgoServices() (map[string]controllerService, err
 	return m.parseAgentStatistics(data)
 }
 
+type serviceList struct {
+	connectedAt int64
+	endpoints   []agentEndpoint
+}
+
 func (m *ControllerManager) parseAgentStatistics(data []byte) (map[string]controllerService, error) {
 	var ca connectedAgentsResponse
 	err := json.Unmarshal(data, &ca)
@@ -296,15 +302,27 @@ func (m *ControllerManager) parseAgentStatistics(data []byte) (map[string]contro
 		return map[string]controllerService{}, fmt.Errorf("cannot decode connected agent JSON: %v", err)
 	}
 
+	newestAgents := map[string]serviceList{}
+	// Find the newest versions of each agent, based on connect time.
+	for _, a := range ca.ConnectedAgents {
+		f, found := newestAgents[a.Name]
+		if !found || f.connectedAt < a.ConnectedAt {
+			newestAgents[a.Name] = serviceList{
+				connectedAt: a.ConnectedAt,
+				endpoints:   a.Endpoints,
+			}
+		}
+	}
+
 	endpoints := map[string]controllerService{}
 
-	for _, a := range ca.ConnectedAgents {
-		for _, ep := range a.Endpoints {
+	for agentName, agent := range newestAgents {
+		for _, ep := range agent.endpoints {
 			if !ep.Configured || !util.Contains(m.serviceTypes, ep.Type) {
 				continue
 			}
-			key := a.Name + ":" + ep.Name + ":" + ep.Type
-			endpoints[key] = controllerService{AgentName: a.Name, Name: ep.Name, Type: ep.Type, Annotations: ep.Annnotations}
+			key := agentName + ":" + ep.Name + ":" + ep.Type
+			endpoints[key] = controllerService{AgentName: agentName, Name: ep.Name, Type: ep.Type, Annotations: ep.Annnotations}
 		}
 	}
 

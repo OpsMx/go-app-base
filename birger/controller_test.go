@@ -81,6 +81,104 @@ func Test_parseAgentStatistics(t *testing.T) {
 				},
 			},
 			false,
+		}, {
+			"most recently connected agent endpoints are used",
+			[]byte(`
+				{
+					"serverTime": 1662067531436,
+					"version": "v3.4.6-6-g4eee038",
+					"connectedAgents": [
+					  {
+						"name": "smith",
+						"session": "session-one",
+						"connectionType": "direct",
+						"endpoints": [
+						  {
+							"name": "whoami",
+							"type": "whoami",
+							"configured": true,
+							"annotations": {
+							  "description": "demo service",
+							  "otherAnnotation": "newer annotation"
+							}
+						  }
+						],
+						"version": "v3.4.6-6-g4eee038",
+						"hostname": "studio.local",
+						"connectedAt": 999,
+						"lastPing": 1662067522916,
+						"agentInfo": {
+						  "annotations": {
+							"description": "demo agent"
+						  }
+						}
+					  },
+					  {
+						"name": "smith",
+						"session": "session-two",
+						"connectionType": "direct",
+						"endpoints": [
+						  {
+							"name": "whoami",
+							"type": "whoami",
+							"configured": true,
+							"annotations": {
+							  "description": "demo service",
+							  "otherAnnotation": "very old annotation"
+							}
+						  }
+						],
+						"version": "v3.4.6-6-g4eee038",
+						"hostname": "studio.local",
+						"connectedAt": 111,
+						"lastPing": 1662067522916,
+						"agentInfo": {
+						  "annotations": {
+							"description": "demo agent"
+						  }
+						}
+					  },
+					  {
+						"name": "smith",
+						"session": "session-two",
+						"connectionType": "direct",
+						"endpoints": [
+						  {
+							"name": "whoami",
+							"type": "whoami",
+							"configured": true,
+							"annotations": {
+							  "description": "demo service",
+							  "otherAnnotation": "old annotation"
+							}
+						  }
+						],
+						"version": "v3.4.6-6-g4eee038",
+						"hostname": "studio.local",
+						"connectedAt": 222,
+						"lastPing": 1662067522916,
+						"agentInfo": {
+						  "annotations": {
+							"description": "demo agent"
+						  }
+						}
+					  }
+					]
+				  }
+				`),
+			[]string{"whoami"},
+			map[string]controllerService{
+				"smith:whoami:whoami": {
+					Name:      "whoami",
+					Type:      "whoami",
+					AgentName: "smith",
+					Annotations: map[string]string{
+						"description":     "demo service",
+						"otherAnnotation": "newer annotation",
+					},
+				},
+			},
+			false,
 		},
 	}
 	for _, tt := range tests {
