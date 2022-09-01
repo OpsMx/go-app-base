@@ -148,7 +148,7 @@ func (m *ControllerManager) reloadFromController() {
 }
 
 func annotationsDifferent(a controllerService, b controllerService) bool {
-	if len(a) != len(b) {
+	if len(a.Annotations) != len(b.Annotations) {
 		return true
 	}
 	for k, v := range a.Annotations {
