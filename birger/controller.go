@@ -196,7 +196,7 @@ type connectedAgent struct {
 	Name         string            `json:"name,omitempty"`
 	Annnotations map[string]string `json:"annotations,omitempty"`
 	Endpoints    []agentEndpoint   `json:"endpoints,omitempty"`
-	ConnectedAt  int64             `json:"connectedAt,omitEmpty"`
+	ConnectedAt  int64             `json:"connectedAt,omitempty"`
 }
 
 type agentEndpoint struct {
