@@ -329,13 +329,21 @@ func (m *ControllerManager) parseAgentStatistics(data []byte) (map[string]contro
 	return endpoints, nil
 }
 
+func (m *ControllerManager) GetCACertPEM() ([]byte, error) {
+	caCert, err := os.ReadFile(m.conf.CAPath)
+	if err != nil {
+		return nil, fmt.Errorf("loading certificate authority: %v", err)
+	}
+	return caCert, nil
+}
+
 func (m *ControllerManager) getTLSClient() (*http.Client, error) {
 	cert, err := tls.LoadX509KeyPair(m.conf.CertificatePath, m.conf.KeyPath)
 	if err != nil {
 		return nil, fmt.Errorf("loading certificate and key: %v", err)
 	}
 
-	caCert, err := os.ReadFile(m.conf.CAPath)
+	caCert, err := m.GetCACertPEM()
 	if err != nil {
 		return nil, fmt.Errorf("loading certificate authority: %v", err)
 	}
