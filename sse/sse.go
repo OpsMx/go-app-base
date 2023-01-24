@@ -18,11 +18,13 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 )
 
 type SSE struct {
-	scanner *bufio.Scanner
+	scanner   *bufio.Scanner
+	autoFlush bool
 }
 
 type Event map[string]string
@@ -30,7 +32,16 @@ type Event map[string]string
 func NewSSE(r io.Reader) *SSE {
 	scanner := bufio.NewScanner(r)
 	scanner.Split(bufio.ScanLines)
-	return &SSE{scanner: scanner}
+	return &SSE{
+		scanner:   scanner,
+		autoFlush: true,
+	}
+}
+
+// AutoFlush allows changing the auto-flush behavior.  Default is to auto-flush after each
+// event.
+func (sse *SSE) AutoFlush(af bool) {
+	sse.autoFlush = af
 }
 
 // Read will return an event, which may be empty if nothing but a keep-alive was
@@ -86,6 +97,12 @@ func (sse *SSE) Write(w io.Writer, event Event) error {
 	}
 	if n != 1 {
 		return fmt.Errorf("short write: %d of 1", n)
+	}
+	if sse.autoFlush {
+		flusher, ok := w.(http.Flusher)
+		if ok {
+			flusher.Flush()
+		}
 	}
 	return nil
 }
