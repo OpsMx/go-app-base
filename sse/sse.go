@@ -56,6 +56,7 @@ func (sse *SSE) Read() (Event, bool) {
 			if len(ret) > 0 {
 				return ret, false
 			}
+			continue
 		}
 		if line == ":" {
 			if len(ret) == 0 {
