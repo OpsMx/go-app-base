@@ -16,6 +16,7 @@ package sse
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"strings"
 )
@@ -32,7 +33,7 @@ func NewSSE(r io.Reader) *SSE {
 	return &SSE{scanner: scanner}
 }
 
-func (sse *SSE) SSERead() Event {
+func (sse *SSE) Read() Event {
 	ret := Event{}
 
 	for sse.scanner.Scan() {
@@ -54,4 +55,43 @@ func (sse *SSE) SSERead() Event {
 		ret[parts[0]] = current
 	}
 	return Event{}
+}
+
+func (sse *SSE) Write(w io.Writer, event Event) error {
+	if len(event) == 0 {
+		return nil
+	}
+
+	for k, v := range event {
+		for _, vv := range strings.Split(v, "\n") {
+			s := k + ": " + vv + "\n"
+			n, err := w.Write([]byte(s))
+			if err != nil {
+				return err
+			}
+			if n != len(s) {
+				return fmt.Errorf("short write: %d of %d", n, len(s))
+			}
+		}
+	}
+	n, err := w.Write([]byte("\n"))
+	if err != nil {
+		return err
+	}
+	if n != 1 {
+		return fmt.Errorf("short write: %d of 1", n)
+	}
+	return nil
+}
+
+func (sse *SSE) KeepAlive(w io.Writer) error {
+	n, err := w.Write([]byte(":\n"))
+	if err != nil {
+		return err
+	}
+	if n != 2 {
+		return fmt.Errorf("short write: %d of 2", n)
+	}
+	return nil
+
 }

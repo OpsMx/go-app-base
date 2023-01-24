@@ -15,12 +15,13 @@
 package sse
 
 import (
+	"bytes"
 	"reflect"
 	"strings"
 	"testing"
 )
 
-func TestSSE_SSERead(t *testing.T) {
+func TestSSE_Read(t *testing.T) {
 	tests := []struct {
 		name  string
 		input string
@@ -50,8 +51,80 @@ func TestSSE_SSERead(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sse := NewSSE(strings.NewReader(tt.input))
-			if got := sse.SSERead(); !reflect.DeepEqual(got, tt.want) {
+			if got := sse.Read(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("SSE.SSERead() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSSE_KeepAlive(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantW   string
+		wantErr bool
+	}{
+		{
+			"works",
+			":\n",
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sse := NewSSE(strings.NewReader(""))
+			w := &bytes.Buffer{}
+			if err := sse.KeepAlive(w); (err != nil) != tt.wantErr {
+				t.Errorf("SSE.KeepAlive() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotW := w.String(); gotW != tt.wantW {
+				t.Errorf("SSE.KeepAlive() = %v, want %v", gotW, tt.wantW)
+			}
+		})
+	}
+}
+
+func TestSSE_Write(t *testing.T) {
+	tests := []struct {
+		name    string
+		event   Event
+		wantW   string
+		wantErr bool
+	}{
+		{
+			"empty event",
+			Event{},
+			"",
+			false,
+		},
+		{
+			"data only",
+			Event{
+				"data": `{"foo":"bar"}`,
+			},
+			"data: {\"foo\":\"bar\"}\n\n",
+			false,
+		},
+		{
+			"multi-line data",
+			Event{
+				"data": "foo\nbar",
+			},
+			"data: foo\ndata: bar\n\n",
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			sse := NewSSE(strings.NewReader(""))
+			w := &bytes.Buffer{}
+			if err := sse.Write(w, tt.event); (err != nil) != tt.wantErr {
+				t.Errorf("SSE.Write() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotW := w.String(); gotW != tt.wantW {
+				t.Errorf("SSE.Write() = %v, want %v", gotW, tt.wantW)
 			}
 		})
 	}
