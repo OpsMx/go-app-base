@@ -44,6 +44,9 @@ func (sse *SSE) Read() Event {
 			}
 		}
 		if line == ":" {
+			if len(ret) == 0 {
+				return ret
+			}
 			continue
 		}
 		parts := strings.SplitN(line, ":", 2)
