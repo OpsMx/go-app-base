@@ -23,36 +23,51 @@ import (
 
 func TestSSE_Read(t *testing.T) {
 	tests := []struct {
-		name  string
-		input string
-		want  Event
+		name    string
+		input   string
+		want    Event
+		wantEOF bool
 	}{
 		{
 			"Nothing but colons",
 			":\n",
 			Event{},
+			false,
+		},
+		{
+			"EOF",
+			"",
+			Event{},
+			true,
 		},
 		{
 			"data with data",
 			"data: foo\n\n",
 			Event{"data": "foo"},
+			false,
 		},
 		{
 			"data with data and colons",
 			"data: foo\n:\n:\n\n",
 			Event{"data": "foo"},
+			false,
 		},
 		{
 			"multi-line data",
 			"data: foo\ndata: bar\n\n",
 			Event{"data": "foo\nbar"},
+			false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sse := NewSSE(strings.NewReader(tt.input))
-			if got := sse.Read(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("SSE.SSERead() = %v, want %v", got, tt.want)
+			got, gotEOF := sse.Read()
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SSE.Read() = %v, want %v", got, tt.want)
+			}
+			if gotEOF != tt.wantEOF {
+				t.Errorf("SSE.Read() EOF == %v, want %v", gotEOF, tt.wantEOF)
 			}
 		})
 	}

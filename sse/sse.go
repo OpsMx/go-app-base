@@ -33,19 +33,22 @@ func NewSSE(r io.Reader) *SSE {
 	return &SSE{scanner: scanner}
 }
 
-func (sse *SSE) Read() Event {
+// Read will return an event, which may be empty if nothing but a keep-alive was
+// received thus far.  The boolean flag indicates EOF.  If true, no more reads should
+// be performed on this SSE.
+func (sse *SSE) Read() (Event, bool) {
 	ret := Event{}
 
 	for sse.scanner.Scan() {
 		line := sse.scanner.Text()
 		if line == "" {
 			if len(ret) > 0 {
-				return ret
+				return ret, false
 			}
 		}
 		if line == ":" {
 			if len(ret) == 0 {
-				return ret
+				return ret, false
 			}
 			continue
 		}
@@ -57,7 +60,7 @@ func (sse *SSE) Read() Event {
 		current = current + strings.TrimSpace(parts[1])
 		ret[parts[0]] = current
 	}
-	return Event{}
+	return Event{}, true
 }
 
 func (sse *SSE) Write(w io.Writer, event Event) error {
