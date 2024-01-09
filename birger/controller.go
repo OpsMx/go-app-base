@@ -219,8 +219,8 @@ type controllerServiceCredentialResponse struct {
 	URL string `json:"url,omitempty"`
 }
 
-func (m *ControllerManager) makeRequest(url string, body io.Reader) (*http.Request, error) {
-	req, err := http.NewRequest(http.MethodPost, url, body)
+func (m *ControllerManager) makeRequest(method string, url string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +251,7 @@ func (m *ControllerManager) getTokenAndURL(s controllerService) (serviceUrl stri
 		return
 	}
 	r := bytes.NewReader(d)
-	req, err := m.makeRequest(url, r)
+	req, err := m.makeRequest(http.MethodPost, url, r)
 	if err != nil {
 		return
 	}
@@ -289,7 +289,12 @@ func (m *ControllerManager) getArgoServices() (map[string]controllerService, err
 		return map[string]controllerService{}, fmt.Errorf("making TLS client: %v", err)
 	}
 
-	resp, err := client.Get(url)
+	req, err := m.makeRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return map[string]controllerService{}, fmt.Errorf("making connected agents request: %v", err)
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return map[string]controllerService{}, fmt.Errorf("fetching connected agents: %v", err)
 	}
