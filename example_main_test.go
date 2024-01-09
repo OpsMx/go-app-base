@@ -36,10 +36,10 @@ const (
 
 var (
 	// eg, http://localhost:14268/api/traces
-	jaegerEndpoint = flag.String("jaeger-endpoint", "", "Jaeger collector endpoint")
-	traceToStdout  = flag.Bool("traceToStdout", false, "log traces to stdout")
-	traceRatio     = flag.Float64("traceRatio", 0.01, "ratio of traces to create, if incoming request is not traced")
-	showversion    = flag.Bool("version", false, "show the version and exit")
+	otlpEndpoint  = flag.String("otlp-endpoint", "", "otlp collector endpoint")
+	traceToStdout = flag.Bool("traceToStdout", false, "log traces to stdout")
+	traceRatio    = flag.Float64("traceRatio", 0.01, "ratio of traces to create, if incoming request is not traced")
+	showversion   = flag.Bool("version", false, "show the version and exit")
 )
 
 func exiter() {
@@ -72,11 +72,11 @@ func Example() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if *jaegerEndpoint != "" {
-		*jaegerEndpoint = util.GetEnvar("JAEGER_TRACE_URL", "")
+	if *otlpEndpoint != "" {
+		*otlpEndpoint = util.GetEnvar("OTLP_HTTP_URL", "")
 	}
 
-	tracerProvider, err := tracer.NewTracerProvider(*jaegerEndpoint, *traceToStdout, version.GitHash(), appName, *traceRatio)
+	tracerProvider, err := tracer.NewTracerProvider(ctx, *otlpEndpoint, *traceToStdout, version.GitHash(), appName, *traceRatio)
 	util.Check(err)
 	defer tracerProvider.Shutdown(ctx)
 
