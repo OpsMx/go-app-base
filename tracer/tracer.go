@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -46,12 +46,12 @@ type TracerProvider struct {
 // If no error is returned, `defer provider.Shutdown(ctx)` should be set up
 // to ensure flushing occurs.
 //
-// If the Jaeger URL is empty, the OpenTelemetry
-// TracerProvider will be configured to not report to Jaeger.
+// If the otlpEndpoint URL is empty, the OpenTelemetry
+// TracerProvider will be configured to not report to an external tracer.
 //
 // If traceToStdout is true, traces will be sent to stdout.
-func NewTracerProvider(jaegerURL string, traceToStdout bool, githash string, appname string, traceRatio float64) (*TracerProvider, error) {
-	res, err := resource.New(context.Background(),
+func NewTracerProvider(ctx context.Context, otlpEndpoint string, traceToStdout bool, githash string, appname string, traceRatio float64) (*TracerProvider, error) {
+	res, err := resource.New(ctx,
 		// add detectors here if needed
 		resource.WithTelemetrySDK(),
 		resource.WithAttributes(
@@ -68,8 +68,8 @@ func NewTracerProvider(jaegerURL string, traceToStdout bool, githash string, app
 	}
 
 	exporterCount := 0
-	if jaegerURL != "" {
-		exp, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(jaegerURL)))
+	if otlpEndpoint != "" {
+		exp, err := otlptracehttp.New(ctx, otlptracehttp.WithEndpoint(otlpEndpoint))
 		if err != nil {
 			return nil, err
 		}
