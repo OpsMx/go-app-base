@@ -27,57 +27,27 @@ func TestConfig_applyDefaults(t *testing.T) {
 		want     Config
 	}{
 		{
-			"nothing provided applies all defaults",
-			Config{},
-			defaultConfig,
-		}, {
 			"URL provided isn't overwritten",
-			Config{URL: "abc"},
+			Config{URL: "abc", Token: "abc"},
 			Config{
 				URL:                    "abc",
-				CAPath:                 defaultConfig.CAPath,
-				CertificatePath:        defaultConfig.CertificatePath,
-				KeyPath:                defaultConfig.KeyPath,
+				Token:                  "abc",
 				UpdateFrequencySeconds: defaultConfig.UpdateFrequencySeconds,
 			},
 		}, {
-			"CAPath provided isn't overwritten",
-			Config{CAPath: "abc"},
+			"token isn't overwritten",
+			Config{Token: "xyz"},
 			Config{
 				URL:                    defaultConfig.URL,
-				CAPath:                 "abc",
-				CertificatePath:        defaultConfig.CertificatePath,
-				KeyPath:                defaultConfig.KeyPath,
-				UpdateFrequencySeconds: defaultConfig.UpdateFrequencySeconds,
-			},
-		}, {
-			"CertificatePath provided isn't overwritten",
-			Config{CertificatePath: "abc"},
-			Config{
-				URL:                    defaultConfig.URL,
-				CAPath:                 defaultConfig.CAPath,
-				CertificatePath:        "abc",
-				KeyPath:                defaultConfig.KeyPath,
-				UpdateFrequencySeconds: defaultConfig.UpdateFrequencySeconds,
-			},
-		}, {
-			"KeyPath provided isn't overwritten",
-			Config{KeyPath: "abc"},
-			Config{
-				URL:                    defaultConfig.URL,
-				CAPath:                 defaultConfig.CAPath,
-				CertificatePath:        defaultConfig.CertificatePath,
-				KeyPath:                "abc",
+				Token:                  "xyz",
 				UpdateFrequencySeconds: defaultConfig.UpdateFrequencySeconds,
 			},
 		}, {
 			"UpdateFrequencySeconds provided isn't overwritten",
-			Config{UpdateFrequencySeconds: 1234},
+			Config{UpdateFrequencySeconds: 1234, Token: "abc"},
 			Config{
 				URL:                    defaultConfig.URL,
-				CAPath:                 defaultConfig.CAPath,
-				CertificatePath:        defaultConfig.CertificatePath,
-				KeyPath:                defaultConfig.KeyPath,
+				Token:                  "abc",
 				UpdateFrequencySeconds: 1234,
 			},
 		},

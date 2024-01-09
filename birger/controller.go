@@ -17,14 +17,12 @@ package birger
 import (
 	"bytes"
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"sync"
 	"time"
 
@@ -221,8 +219,21 @@ type controllerServiceCredentialResponse struct {
 	URL string `json:"url,omitempty"`
 }
 
+func (m *ControllerManager) makeRequest(url string, body io.Reader) (*http.Request, error) {
+	req, err := http.NewRequest(http.MethodPost, url, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("content-type", "application/json")
+	req.Header.Set("authorization", "Bearer "+m.conf.Token)
+	return req, nil
+}
+
 func (m *ControllerManager) getTokenAndURL(s controllerService) (serviceUrl string, serviceToken string, err error) {
 	url, err := url.JoinPath(m.conf.URL, "/api/v1/generateServiceCredentials")
+	if err != nil {
+		return
+	}
 
 	client, err := m.getTLSClient()
 	if err != nil {
@@ -236,8 +247,15 @@ func (m *ControllerManager) getTokenAndURL(s controllerService) (serviceUrl stri
 	}
 
 	d, err := json.Marshal(credentialsRequest)
+	if err != nil {
+		return
+	}
 	r := bytes.NewReader(d)
-	resp, err := client.Post(url, "application/json", r)
+	req, err := m.makeRequest(url, r)
+	if err != nil {
+		return
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		return "", "", fmt.Errorf("fetching service credentials: %v", err)
 	}
@@ -327,30 +345,9 @@ func (m *ControllerManager) parseAgentStatistics(data []byte) (map[string]contro
 	return endpoints, nil
 }
 
-func (m *ControllerManager) GetCACertPEM() ([]byte, error) {
-	caCert, err := os.ReadFile(m.conf.CAPath)
-	if err != nil {
-		return nil, fmt.Errorf("loading certificate authority: %v", err)
-	}
-	return caCert, nil
-}
-
 func (m *ControllerManager) getTLSClient() (*http.Client, error) {
-	cert, err := tls.LoadX509KeyPair(m.conf.CertificatePath, m.conf.KeyPath)
-	if err != nil {
-		return nil, fmt.Errorf("loading certificate and key: %v", err)
-	}
-
-	caCert, err := m.GetCACertPEM()
-	if err != nil {
-		return nil, fmt.Errorf("loading certificate authority: %v", err)
-	}
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
-
 	tlsConfig := tls.Config{
-		Certificates: []tls.Certificate{cert},
-		RootCAs:      caCertPool,
+		MinVersion: tls.VersionTLS13,
 	}
 	return httputil.NewHTTPClient(&tlsConfig), nil
 }
