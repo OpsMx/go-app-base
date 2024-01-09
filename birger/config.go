@@ -14,30 +14,28 @@
 
 package birger
 
+import (
+	"log"
+	"os"
+)
+
 type Config struct {
 	URL                    string `json:"url,omitempty" yaml:"url,omitempty"`
-	CAPath                 string `json:"caPath,omitempty" yaml:"caPath,omitempty"`
-	CertificatePath        string `json:"certificatePath,omitempty" yaml:"certificatePath,omitempty"`
-	KeyPath                string `json:"keyPath,omitempty" yaml:"keyPath,omitempty"`
+	Token                  string `json:"token,omitempty" yaml:"token,omitempty"`
 	UpdateFrequencySeconds int    `json:"updateFrequencySeconds,omitempty" yaml:"updateFrequencySeconds,omitempty"`
 }
 
 var defaultConfig = Config{
-	CAPath:                 "/app/secrets/controller-ca.crt",
-	CertificatePath:        "/app/secrets/controller-control/tls.crt",
-	KeyPath:                "/app/secrets/controller-control/tls.key",
 	UpdateFrequencySeconds: 30,
 }
 
 func (cc *Config) applyDefaults() {
-	if cc.CAPath == "" {
-		cc.CAPath = defaultConfig.CAPath
-	}
-	if cc.CertificatePath == "" {
-		cc.CertificatePath = defaultConfig.CertificatePath
-	}
-	if cc.KeyPath == "" {
-		cc.KeyPath = defaultConfig.KeyPath
+	if cc.Token == "" {
+		t, found := os.LookupEnv("CONTROLLER_TOKEN")
+		if !found {
+			log.Fatal("no token in config, nor CONTROLLER_TOKEN envar")
+		}
+		cc.Token = t
 	}
 	if cc.UpdateFrequencySeconds == 0 {
 		cc.UpdateFrequencySeconds = defaultConfig.UpdateFrequencySeconds
