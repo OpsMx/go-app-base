@@ -106,6 +106,7 @@ func (m *ControllerManager) reloadFromController() {
 	services, err := m.getArgoServices()
 	if err != nil {
 		m.healthcheckStatus = err
+		log.Printf("unable to get argo services from controller: %v", err)
 		return
 	}
 	m.healthcheckStatus = nil
